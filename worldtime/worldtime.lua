@@ -85,7 +85,7 @@ worldtime.persist = function()
 			"WARNING: worldtime:  Could not save time to "..
 				worldtime.get_filename() )	
 	else
-		minetest.log('error', 
+		minetest.log('trace', 
 			"worldtime:  Saved current time ("..worldtime.worldtime..") to "..
 				worldtime.get_filename() )
 	end
