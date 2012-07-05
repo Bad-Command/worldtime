@@ -29,3 +29,7 @@ worldtime.version = 1.01
 dofile(minetest.get_modpath("worldtime").."/config.lua")
 -- worldtime.lua contains the code
 dofile(minetest.get_modpath("worldtime").."/worldtime.lua")
+
+worldtime.intialize()
+worldtime.persist()
+minetest.register_globalstep(worldtime.timechange)

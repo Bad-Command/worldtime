@@ -19,15 +19,15 @@
 
 -- Call this function to get the world time
 worldtime.get = function() 
-	return worldtime.worldtime
+	return worldtime.worldtime + worldtime.worldtime_subsec
 end
 -- Obsolete function to get world time.  Use worldtime.get().
 function worldtime_get() 
 	return worldtime.get()
 end
 
-worldtime.last_file_io = -1
-worldtime.worldtime = 0.0
+worldtime.worldtime = 0
+worldtime.worldtime_subsec = 0
 
 worldtime.get_filename = function() 
 	return minetest.get_worldpath(modname) .. "/" .. worldtime.save_file_name
@@ -38,16 +38,18 @@ worldtime.read_time = function()
 	local err
 	file,err = io.open( worldtime.get_filename(), "r" )
 	if err then
+		minetest.log("error", "worldtime: Could not open file: " .. err)
 		return false
 	end
 	local text = file:read("*all")
-	local time = string.match(text, "^(%d+\.?%d*)$")
-	if time == nil or string.match(time, "^%d+\.$") then	
-		minetest.log("info", "worldtime: Could not parse text when reading worldtime: " .. text)
+	local time = string.match(text, "^(%d+%.?%d*)$")
+	if time == nil or string.match(time, "^%d+%.$") then	
+		minetest.log("error", "worldtime: Could not parse text when reading worldtime: " .. text)
 		return false
 	end
-	worldtime.worldtime = time + 0.0
-	worldtime.last_file_io = worldtime.worldtime
+	time = time + 0.0
+	worldtime.worldtime = math.floor(time)
+	worldtime.worldtime_subsec = time - worldtime.worldtime
 	return true
 end
 
@@ -60,7 +62,6 @@ worldtime.write_time = function()
 	end
 	file:write(worldtime.worldtime)
 	file:close()
-	worldtime.last_file_io = worldtime.worldtime
 	return true
 end
 
@@ -84,17 +85,17 @@ worldtime.persist = function()
 			"WARNING: worldtime:  Could not save time to "..
 				worldtime.get_filename() )	
 	else
-		minetest.log('trace', 
+		minetest.log('error', 
 			"worldtime:  Saved current time ("..worldtime.worldtime..") to "..
 				worldtime.get_filename() )
 	end
 end
 
 worldtime.timechange = function(dtime)
-	worldtime.worldtime = worldtime.worldtime + dtime
+	worldtime.worldtime_subsec = worldtime.worldtime_subsec + dtime
+	if ( worldtime.worldtime_subsec > 1.0 ) then
+		worldtime.worldtime_subsec = worldtime.worldtime_subsec - 1.0
+		worldtime.worldtime = worldtime.worldtime + 1
+	end
 end
-
-worldtime.intialize()
-worldtime.persist()
-minetest.register_globalstep(worldtime.timechange)
 
